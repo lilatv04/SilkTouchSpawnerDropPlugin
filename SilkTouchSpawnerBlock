@@ -1,0 +1,53 @@
+package verbison.aiden.first_Minecraft;
+
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+public class SilkTouchSpawnerBlock implements Listener {
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+
+        // Check if the block is a spawner
+        if (block.getType() == Material.SPAWNER) {
+            Player player = event.getPlayer();
+            ItemStack itemInHand = player.getInventory().getItemInMainHand();
+
+            // Check if the player is using a Silk Touch pickaxe
+            if (itemInHand.getType().toString().contains("_PICKAXE") &&
+                    itemInHand.containsEnchantment(Enchantment.SILK_TOUCH)) {
+
+                // Prevent default drops and XP
+                event.setDropItems(false);
+                event.setExpToDrop(0);
+
+                // Get the type of entity the spawner was spawning
+                CreatureSpawner spawner = (CreatureSpawner) block.getState();
+                String entityType = spawner.getSpawnedType().toString();
+
+                // Create a spawner item with custom metadata
+                ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
+                ItemMeta meta = spawnerItem.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(entityType + " Spawner");
+                    spawnerItem.setItemMeta(meta);
+                }
+
+                // Drop the customized spawner item
+                block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
+
+                // Notify the player
+                player.sendMessage("You mined a " + entityType + " spawner using Silk Touch!");
+            }
+        }
+    }
+}
